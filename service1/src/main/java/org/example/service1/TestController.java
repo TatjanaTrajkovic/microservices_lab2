@@ -15,7 +15,7 @@ public class TestController {
         RestClient client = RestClient.create("http://localhost:8083/api/today");
         var instant = client.get().retrieve().body(Instant.class);
 
-        return "Hello from service1!";
+        return "Hello from service1!" + instant;
     }
 
 }
