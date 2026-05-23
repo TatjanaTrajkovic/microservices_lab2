@@ -35,7 +35,7 @@ public class BffConfig {
         // /api/test -> http://localhost:8081/api/test
         return route()
                 .GET("/api/test", http())
-                .before(uri("http://localhost:8081/"))
+                .before(uri("http://localhost:8081/"))//ett filter när reqyesten kommer in från klienten som manipulerar inkommande requesten vilken host vi ska ansluta till
                 .filter(tokenRelay())
                 .build();
     }
