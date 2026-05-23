@@ -35,7 +35,7 @@ public class BffConfig {
         // /api/test -> http://localhost:8081/api/test
         return route()
                 .GET("/api/test", http())
-                .before(uri("http://localhost:8081/"))//ett filter när reqyesten kommer in från klienten som manipulerar inkommande requesten vilken host vi ska ansluta till
+                .before(uri("http://localhost:8081/"))
                 .filter(tokenRelay())
                 .build();
     }
@@ -51,7 +51,7 @@ public class BffConfig {
                 .build();
     }
 
-    @Bean
+    @Bean //alla segment som har test då redigeras den till service1, manipulering av inkommande data
     public RouterFunction<ServerResponse> route1WithSetPathAndSegment() {
         // /test -> http://localhost:8081/api/test
         return route()
