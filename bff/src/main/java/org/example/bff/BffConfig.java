@@ -21,10 +21,10 @@ public class BffConfig {
                 .build();
     }
 
-    @Bean
-    RouterFunction<ServerResponse> router(){
-
-
-    }
+//    @Bean
+//    RouterFunction<ServerResponse> router(){
+//
+//
+//    }
 
 }

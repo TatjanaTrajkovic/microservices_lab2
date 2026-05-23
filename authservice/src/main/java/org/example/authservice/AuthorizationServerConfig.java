@@ -41,8 +41,9 @@ public class AuthorizationServerConfig {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://127.0.0.1:5555/callback")
-//                .scope(OidcScopes.OPENID)
+//                .redirectUri("http://127.0.0.1:5555/callback")
+                .redirectUri("http://localhost:8081/login/oauth2/code/authservice")
+                .scope(OidcScopes.OPENID)
                 .scope("user.read")
                 .clientSettings(
                         ClientSettings.builder().requireProofKey(false).build()
