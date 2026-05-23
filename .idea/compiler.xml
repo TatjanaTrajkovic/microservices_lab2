@@ -8,12 +8,14 @@
         <outputRelativeToContentRoot value="true" />
         <module name="authservice" />
         <module name="service1" />
+        <module name="bff" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="authservice" options="-parameters" />
+      <module name="bff" options="-parameters" />
       <module name="service1" options="-parameters" />
     </option>
   </component>
