@@ -9,6 +9,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -18,6 +19,7 @@ import org.springframework.security.oauth2.server.authorization.client.InMemoryR
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -28,27 +30,28 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Set;
 import java.util.UUID;
 
 @Configuration
 public class AuthorizationServerConfig {
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository() {
+    public RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {
         RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("gateway-client")
-                .clientSecret("{noop}secret")
+                .clientSecret(passwordEncoder.encode("secret"))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-//                .redirectUri("http://127.0.0.1:5555/callback")
-                .redirectUri("http://localhost:8081/login/oauth2/code/authservice")
-                .scope(OidcScopes.OPENID)
-                .scope("user.read")
-                .clientSettings(
-                        ClientSettings.builder().requireProofKey(false).build()
-                )
-
+                .redirectUri("http://localhost:8080/login/oauth2/code/authservice")
+                .scopes(scopes -> scopes.addAll(
+                        Set.of("user.read", "user.write",
+                                OidcScopes.OPENID,
+                                OidcScopes.PROFILE)))
+                .tokenSettings(TokenSettings.builder()
+                        .reuseRefreshTokens(false) // Rotation för säkerhet
+                        .build())
                 .build();
 
         return new InMemoryRegisteredClientRepository(client);
