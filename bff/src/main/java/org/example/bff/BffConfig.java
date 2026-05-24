@@ -22,7 +22,9 @@ public class BffConfig {
     SecurityFilterChain security(HttpSecurity http) {
         return http
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/graphql", "/graphiql/**").permitAll()
                         .anyRequest().authenticated())
+                .csrf(csrf -> csrf.disable())
                 // Enable OAuth2 login (for browser users)
                 .oauth2Login(Customizer.withDefaults())
                 // Enable OAuth2 client (needed for tokenRelay)
