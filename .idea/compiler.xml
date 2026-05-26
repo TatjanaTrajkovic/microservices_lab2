@@ -1,26 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="CompilerConfiguration">
-    <annotationProcessing>
-      <profile name="Maven default annotation processors profile" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <module name="service2" />
-        <module name="service1" />
-        <module name="bff" />
-        <module name="service3" />
-        <module name="authservice" />
-      </profile>
-    </annotationProcessing>
-  </component>
-  <component name="JavacSettings">
-    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="authservice" options="-parameters" />
-      <module name="bff" options="-parameters" />
-      <module name="service1" options="-parameters" />
-      <module name="service2" options="-parameters" />
-      <module name="service3" options="-parameters" />
-    </option>
-  </component>
+    <component name="CompilerConfiguration">
+        <annotationProcessing>
+            <profile name="Maven default annotation processors profile" enabled="true">
+                <sourceOutputDir name="target/generated-sources/annotations" />
+                <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+                <outputRelativeToContentRoot value="true" />
+                <module name="stockservice" />
+                <module name="bff" />
+                <module name="authservice" />
+                <module name="service2" />
+                <module name="service1" />
+                <module name="service3" />
+                <module name="orderservice" />
+            </profile>
+        </annotationProcessing>
+        <bytecodeTargetLevel>
+            <module name="demo" target="26" />
+        </bytecodeTargetLevel>
+    </component>
+    <component name="JavacSettings">
+        <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+            <module name="authservice" options="-parameters" />
+            <module name="bff" options="-parameters" />
+            <module name="demo" options="-parameters" />
+            <module name="orderservice" options="-parameters" />
+            <module name="service1" options="-parameters" />
+            <module name="service2" options="-parameters" />
+            <module name="service3" options="-parameters" />
+            <module name="stockservice" options="-parameters" />
+        </option>
+    </component>
 </project>
