@@ -16,5 +16,6 @@
         <module>service1</module>
         <module>service2</module>
         <module>service3</module>
+        <module>stockservice</module>
     </modules>
 </project>
