@@ -109,3 +109,16 @@ public class OutboxRelay {
         }
     }
 }
+//för att inte tappa bort var event som vi skapade så skrevs både ordern och eventet in i varsin tabell i samma transaktion
+// med jämna mellanrum (5 sec mellanrum så startar den här outbox relay) går till db och säger finns det ngra events här som
+//har statusen PENDING i outbox_event db och om den hittar ngt sådant så går den igenom och loopar igenom alla outbox_eventen
+// och sen ska den skicka den med rabbitmq convertAndSend och om den lyckas med det så behöver vi också uppdatera db. Det gör
+//den i updateStatus som körs (om vi får meddelande från den då updateras db) och uppdateras till PROCESED.
+//Och skulle det vara så att den inte har markerats i databasen nästa gång den här timern löser ut så att den kör relaye events igen.
+//Så är den ju fortfarande PENDING då i databasen, så då kommer den att försöka skicka den igen då?Så det är för att garantera att de skickas verkligen.
+//Så att går någonting fel där, så har den ju då inte uppdaterats, men den kan ju skickas för den bygger ju på då ett least ones delivery här.
+//Så då är det viktigt att mottagaren, hanterar det att meddelandet kan kan faktiskt komma flera gånger. Då har vi det här unika uuid på den.För att skydda mot det!
+//Så det ska ju då vara ett säkrare sätt i och med att vi gör den här första undanssparningen i en transaktion till en ACID kompatibel databas
+//och sen kan vi kommentera det med en outbox relay implementation som kör med jämna mellanrum och försöker posta det som meddelande och då finns inte med tex rabbit kön uppe till exempel,
+// ja, då får vi vänta, då får vi då har vi kvar våra pending events i vår tabell. Och sen kan vi skicka dem och publicera dem när meddelandekön är där och svarar och ger oss en aktiv knowledge tillbaka.
+//ACID-kompatibel databas = databas som ger säkra, konsekventa transaktioner.

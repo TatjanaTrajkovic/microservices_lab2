@@ -18,8 +18,8 @@ public class OrderController {
 
     @PostMapping
     public Order placeOrder(@RequestBody Order order) throws JsonProcessingException {
-        Order savedOrder = orderService.placeOrder(order);
-        
+        Order savedOrder = orderService.placeOrder(order); //den sparar en order och sen
+        //kraschar den applikationen, kastar en runtime exeption innan den returnerar.
         if (chaosContext.getCurrentScenario() == ChaosScenario.FAIL_BEFORE_PUBLISH) {
             throw new RuntimeException("Chaos: Failing before publish (simulating crash after save)");
         }
