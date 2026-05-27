@@ -1,19 +1,22 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.example.grpc";
-option java_outer_classname = "GreetingProto";
+option java_package = "org.example.service3.grpc";
+option java_outer_classname = "UserProto";
 
-package greeting;
+package user;
 
-service GreetingService {
-  rpc sayHello (HelloRequest) returns (HelloResponse);
+service UserService {
+  rpc GetUserProfile (GetUserProfileRequest) returns (UserProfileResponse);
 }
 
-message HelloRequest {
-  string name = 1;
+message GetUserProfileRequest {
+  string userId = 1;
 }
 
-message HelloResponse {
-  string message = 1;
+message UserProfileResponse {
+  string userId = 1;
+  string username = 2;
+  string email = 3;
+  bool found = 4;
 }
