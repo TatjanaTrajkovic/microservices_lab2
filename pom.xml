@@ -12,10 +12,7 @@
     <modules>
         <module>authservice</module>
         <module>bff</module>
-        <module>orderservice</module>
-        <module>service1</module>
-        <module>service2</module>
-        <module>service3</module>
-        <module>stockservice</module>
+        <module>userservice</module>
+        <module>messageservice</module>
     </modules>
 </project>

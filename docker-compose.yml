@@ -1,5 +1,20 @@
 services:
 
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -12,7 +27,7 @@ services:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   authservice:
     build: ./authservice
@@ -20,20 +35,32 @@ services:
       - "9000:9000"
 
   userservice:
-    build: ./service3
+    build: ./userservice
     ports:
       - "8083:8083"
     depends_on:
-      - rabbitmq
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/user_db
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
 
   messageservice:
-    build: ./service2
+    build: ./messageservice
     ports:
       - "8082:8082"
     depends_on:
+      mysql:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/message_db
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_RABBITMQ_HOST: rabbitmq
 
   bff:
@@ -48,3 +75,6 @@ services:
       SERVICES_AUTH_URL: http://authservice:9000
       SERVICES_USER_URL: http://userservice:8083
       SERVICES_MESSAGE_URL: http://messageservice:8082
+
+volumes:
+  mysql_data:
