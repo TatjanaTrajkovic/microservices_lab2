@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Klient</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 16px; }
+    input, button { padding: 8px; margin: 4px 0; width: 100%; box-sizing: border-box; }
+    button { background: #0070f3; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0051bb; }
+    #messages { border: 1px solid #ddd; padding: 12px; min-height: 150px; margin-top: 8px; border-radius: 4px; }
+    .msg { padding: 4px 0; border-bottom: 1px solid #eee; }
+    #status { color: green; font-size: 13px; margin: 4px 0; }
+    section { margin-bottom: 24px; border: 1px solid #eee; padding: 16px; border-radius: 8px; }
+    h2 { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <h1>Distribuerad Chatt — G-demo</h1>
+
+  <section>
+    <h2>Registrera användare</h2>
+    <input id="reg-username" placeholder="Användarnamn">
+    <input id="reg-email"    placeholder="E-post">
+    <input id="reg-password" type="password" placeholder="Lösenord">
+    <button onclick="register()">Registrera</button>
+  </section>
+
+  <section>
+    <h2>Logga in</h2>
+    <input id="login-username" placeholder="Användarnamn">
+    <input id="login-password" type="password" placeholder="Lösenord">
+    <button onclick="login()">Logga in</button>
+    <div id="status"></div>
+  </section>
+
+  <section>
+    <h2>Skicka meddelande</h2>
+    <input id="msg-content" placeholder="Skriv ett meddelande...">
+    <button onclick="sendMessage()">Skicka</button>
+  </section>
+
+  <section>
+    <h2>Meddelanden</h2>
+    <button onclick="loadMessages()">Ladda meddelanden</button>
+    <div id="messages"></div>
+  </section>
+
+  <script>
+    const BFF = 'http://localhost:8080';
+    let token = null;
+
+    async function register() {
+      const res = await fetch(`${BFF}/api/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('reg-username').value,
+          email:    document.getElementById('reg-email').value,
+          password: document.getElementById('reg-password').value
+        })
+      });
+      const data = await res.json();
+      alert(res.ok ? `Registrerad! userId: ${data.userId}` : `Fel: ${JSON.stringify(data)}`);
+    }
+
+    async function login() {
+      const res = await fetch(`${BFF}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('login-username').value,
+          password: document.getElementById('login-password').value
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        token = data.token;
+        document.getElementById('status').textContent = `Inloggad som ${document.getElementById('login-username').value}`;
+      } else {
+        document.getElementById('status').textContent = `Fel: ${JSON.stringify(data)}`;
+        document.getElementById('status').style.color = 'red';
+      }
+    }
+
+    async function sendMessage() {
+      if (!token) { alert('Logga in först!'); return; }
+      const res = await fetch(`${BFF}/api/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ content: document.getElementById('msg-content').value })
+      });
+      if (res.ok) { document.getElementById('msg-content').value = ''; loadMessages(); }
+    }
+
+    async function loadMessages() {
+      if (!token) { alert('Logga in först!'); return; }
+      const res = await fetch(`${BFF}/api/messages`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const msgs = await res.json();
+      const div = document.getElementById('messages');
+      div.innerHTML = msgs.map(m =>
+        `<div class="msg"><b>${m.senderId || '?'}</b>: ${m.content} <small>${m.timestamp || ''}</small></div>`
+      ).join('');
+    }
+  </script>
+</body>
+</html>
