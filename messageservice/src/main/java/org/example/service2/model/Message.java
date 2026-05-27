@@ -16,6 +16,8 @@ public class Message {
 
     private String senderId;
 
+    private String senderUsername;
+
     private LocalDateTime timestamp;
 
     @PrePersist
@@ -28,5 +30,7 @@ public class Message {
     public void setContent(String content) { this.content = content; }
     public String getSenderId() { return senderId; }
     public void setSenderId(String senderId) { this.senderId = senderId; }
+    public String getSenderUsername() { return senderUsername; }
+    public void setSenderUsername(String senderUsername) { this.senderUsername = senderUsername; }
     public LocalDateTime getTimestamp() { return timestamp; }
 }

@@ -1,5 +1,6 @@
 package org.example.authservice.service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Map;
 
 @Service
 public class JwtService {
@@ -27,5 +29,17 @@ public class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + 86_400_000L))
                 .signWith(getKey())
                 .compact();
+    }
+
+    public Map<String, String> verifyToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return Map.of(
+                "userId",   claims.getSubject(),
+                "username", claims.get("username", String.class)
+        );
     }
 }

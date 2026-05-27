@@ -66,6 +66,7 @@ services:
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_RABBITMQ_HOST: rabbitmq
+      GRPC_CLIENT_USERSERVICE_ADDRESS: userservice:8083
 
   bff:
     build: ./bff
