@@ -61,7 +61,7 @@
         })
       });
       const data = await res.json();
-      alert(res.ok ? `Registrerad! userId: ${data.userId}` : `Fel: ${JSON.stringify(data)}`);
+      alert(res.ok ? `Registrerad! id: ${data.id}` : `Fel: ${JSON.stringify(data)}`);
     }
 
     async function login() {
@@ -101,7 +101,7 @@
       const msgs = await res.json();
       const div = document.getElementById('messages');
       div.innerHTML = msgs.map(m =>
-        `<div class="msg"><b>${m.senderId || '?'}</b>: ${m.content} <small>${m.timestamp || ''}</small></div>`
+        `<div class="msg"><b>${m.senderUsername || m.senderId || '?'}</b>: ${m.content} <small>${m.timestamp || ''}</small></div>`
       ).join('');
     }
   </script>
