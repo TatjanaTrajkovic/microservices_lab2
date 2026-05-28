@@ -1,0 +1,281 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-05-28",
+  "__export_source": "microservices-lab2",
+  "resources": [
+    {
+      "_id": "wrk_001",
+      "_type": "workspace",
+      "name": "Microservices Lab2 — Chatt",
+      "description": "Distribuerad chattapplikation"
+    },
+    {
+      "_id": "env_001",
+      "_type": "environment",
+      "parentId": "wrk_001",
+      "name": "Base Environment",
+      "data": {
+        "bff_url": "http://localhost:8080",
+        "auth_url": "http://localhost:9000",
+        "user_url": "http://localhost:8083",
+        "message_url": "http://localhost:8082",
+        "token": ""
+      }
+    },
+
+    {
+      "_id": "grp_bff",
+      "_type": "request_group",
+      "parentId": "wrk_001",
+      "name": "BFF — port 8080 (klientens ingångspunkt)"
+    },
+    {
+      "_id": "grp_auth",
+      "_type": "request_group",
+      "parentId": "wrk_001",
+      "name": "AuthService — port 9000 (intern)"
+    },
+    {
+      "_id": "grp_user",
+      "_type": "request_group",
+      "parentId": "wrk_001",
+      "name": "UserService — port 8083 (intern)"
+    },
+    {
+      "_id": "grp_msg",
+      "_type": "request_group",
+      "parentId": "wrk_001",
+      "name": "MessageService — port 8082 (intern)"
+    },
+
+    {
+      "_id": "req_bff_register",
+      "_type": "request",
+      "parentId": "grp_bff",
+      "name": "1. Registrera användare",
+      "method": "POST",
+      "url": "{{ _.bff_url }}/api/users",
+      "description": "Skapar profil i UserService + sparar lösenord i AuthService. Kräver INTE JWT.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"alice\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"secret123\"\n}"
+      }
+    },
+    {
+      "_id": "req_bff_login",
+      "_type": "request",
+      "parentId": "grp_bff",
+      "name": "2. Logga in — få JWT",
+      "method": "POST",
+      "url": "{{ _.bff_url }}/api/auth/login",
+      "description": "Validerar lösenord med BCrypt. Returnerar JWT-token. Kräver INTE JWT.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"alice\",\n  \"password\": \"secret123\"\n}"
+      }
+    },
+    {
+      "_id": "req_bff_get_users",
+      "_type": "request",
+      "parentId": "grp_bff",
+      "name": "3. Hämta alla användare",
+      "method": "GET",
+      "url": "{{ _.bff_url }}/api/users",
+      "description": "Kräver JWT. BFF validerar token → proxyas till UserService.",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": { "mimeType": "application/json" }
+    },
+    {
+      "_id": "req_bff_get_user_id",
+      "_type": "request",
+      "parentId": "grp_bff",
+      "name": "4. Hämta användare med ID",
+      "method": "GET",
+      "url": "{{ _.bff_url }}/api/users/KLISTRA-IN-USER-ID-HÄR",
+      "description": "Kräver JWT. Ersätt USER-ID med faktiskt ID från registreringen.",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": { "mimeType": "application/json" }
+    },
+    {
+      "_id": "req_bff_send_msg",
+      "_type": "request",
+      "parentId": "grp_bff",
+      "name": "5. Skicka meddelande (gRPC + RabbitMQ)",
+      "method": "POST",
+      "url": "{{ _.bff_url }}/api/messages",
+      "description": "Kräver JWT. BFF extraherar userId från token → MessageService anropar UserService via gRPC → publicerar till RabbitMQ.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"Hej från distribuerad chatt!\"\n}"
+      }
+    },
+    {
+      "_id": "req_bff_get_msgs",
+      "_type": "request",
+      "parentId": "grp_bff",
+      "name": "6. Hämta alla meddelanden",
+      "method": "GET",
+      "url": "{{ _.bff_url }}/api/messages",
+      "description": "Kräver JWT. Returnerar lista sorterad nyast först med senderUsername.",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": { "mimeType": "application/json" }
+    },
+
+    {
+      "_id": "req_auth_login",
+      "_type": "request",
+      "parentId": "grp_auth",
+      "name": "Login (direkt)",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/api/auth/login",
+      "description": "AuthService direkt — validerar BCrypt-lösenord och returnerar JWT.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"alice\",\n  \"password\": \"secret123\"\n}"
+      }
+    },
+    {
+      "_id": "req_auth_register",
+      "_type": "request",
+      "parentId": "grp_auth",
+      "name": "Register (direkt)",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/api/auth/register",
+      "description": "AuthService direkt — sparar BCrypt-hashat lösenord.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"userId\": \"KLISTRA-IN-USER-ID\",\n  \"username\": \"alice\",\n  \"password\": \"secret123\"\n}"
+      }
+    },
+    {
+      "_id": "req_auth_verify",
+      "_type": "request",
+      "parentId": "grp_auth",
+      "name": "Verifiera JWT-token",
+      "method": "GET",
+      "url": "{{ _.auth_url }}/api/auth/verify",
+      "description": "Validerar token och returnerar {userId, username}. Visar att AuthService kan verifiera tokens.",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": { "mimeType": "application/json" }
+    },
+
+    {
+      "_id": "req_user_create",
+      "_type": "request",
+      "parentId": "grp_user",
+      "name": "Skapa användare (direkt)",
+      "method": "POST",
+      "url": "{{ _.user_url }}/api/users",
+      "description": "UserService direkt — skapar profil och sparar i user_db.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"bob\",\n  \"email\": \"bob@example.com\"\n}"
+      }
+    },
+    {
+      "_id": "req_user_get_all",
+      "_type": "request",
+      "parentId": "grp_user",
+      "name": "Hämta alla användare (direkt)",
+      "method": "GET",
+      "url": "{{ _.user_url }}/api/users",
+      "description": "UserService direkt — returnerar alla profiler från user_db.",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+    {
+      "_id": "req_user_get_id",
+      "_type": "request",
+      "parentId": "grp_user",
+      "name": "Hämta användare med ID (direkt)",
+      "method": "GET",
+      "url": "{{ _.user_url }}/api/users/KLISTRA-IN-USER-ID-HÄR",
+      "description": "UserService direkt — hämtar specifik profil.",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+    {
+      "_id": "req_user_update",
+      "_type": "request",
+      "parentId": "grp_user",
+      "name": "Uppdatera användare (direkt)",
+      "method": "PUT",
+      "url": "{{ _.user_url }}/api/users/KLISTRA-IN-USER-ID-HÄR",
+      "description": "UserService direkt — uppdaterar username och email.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"alice_updated\",\n  \"email\": \"alice_new@example.com\"\n}"
+      }
+    },
+    {
+      "_id": "req_user_delete",
+      "_type": "request",
+      "parentId": "grp_user",
+      "name": "Ta bort användare (direkt)",
+      "method": "DELETE",
+      "url": "{{ _.user_url }}/api/users/KLISTRA-IN-USER-ID-HÄR",
+      "description": "UserService direkt — tar bort profil från user_db.",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+
+    {
+      "_id": "req_msg_send",
+      "_type": "request",
+      "parentId": "grp_msg",
+      "name": "Skicka meddelande (direkt)",
+      "method": "POST",
+      "url": "{{ _.message_url }}/api/messages",
+      "description": "MessageService direkt — triggar gRPC-anrop till UserService + RabbitMQ-publicering.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"Direktanrop till MessageService\",\n  \"senderId\": \"KLISTRA-IN-USER-ID-HÄR\"\n}"
+      }
+    },
+    {
+      "_id": "req_msg_get_all",
+      "_type": "request",
+      "parentId": "grp_msg",
+      "name": "Hämta alla meddelanden (direkt)",
+      "method": "GET",
+      "url": "{{ _.message_url }}/api/messages",
+      "description": "MessageService direkt — returnerar alla meddelanden med senderUsername.",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    }
+  ]
+}
