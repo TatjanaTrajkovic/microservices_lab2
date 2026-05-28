@@ -50,18 +50,31 @@
     const BFF = 'http://localhost:8080';
     let token = null;
 
+    async function parseResponse(res) {
+      const text = await res.text();
+      try { return text ? JSON.parse(text) : {}; } catch { return { message: text }; }
+    }
+
     async function register() {
-      const res = await fetch(`${BFF}/api/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: document.getElementById('reg-username').value,
-          email:    document.getElementById('reg-email').value,
-          password: document.getElementById('reg-password').value
-        })
-      });
-      const data = await res.json();
-      alert(res.ok ? `Registrerad! id: ${data.id}` : `Fel: ${JSON.stringify(data)}`);
+      try {
+        const res = await fetch(`${BFF}/api/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('reg-username').value,
+            email:    document.getElementById('reg-email').value,
+            password: document.getElementById('reg-password').value
+          })
+        });
+        const data = await parseResponse(res);
+        if (res.ok) {
+          alert(`Registrerad! Användarnamn: ${data.username}`);
+        } else {
+          alert(`Registrering misslyckades (${res.status}): ${data.message || JSON.stringify(data)}`);
+        }
+      } catch (e) {
+        alert(`Nätverksfel: ${e.message}`);
+      }
     }
 
     async function login() {
