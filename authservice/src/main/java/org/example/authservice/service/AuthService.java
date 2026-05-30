@@ -15,13 +15,14 @@ public class AuthService {
 
     private final UserCredentialsRepository repo;
     private final JwtService jwtService;
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();//bcrypt
 
     public AuthService(UserCredentialsRepository repo, JwtService jwtService) {
         this.repo = repo;
         this.jwtService = jwtService;
     }
 
+    //Vid registrering den hashar lösenordet
     public void register(RegisterRequest req) {
         if (repo.existsById(req.userId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "UserId already registered");

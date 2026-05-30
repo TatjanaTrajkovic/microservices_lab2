@@ -17,25 +17,27 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret;
 
+    //här är secretkey som kan inte manipuleras utan nyckel
     private SecretKey getKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
+    //token gäller i 24 timmar
     public String generateToken(String userId, String username) {
         return Jwts.builder()
                 .subject(userId)
                 .claim("username", username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 86_400_000L))
-                .signWith(getKey())
+                .signWith(getKey())// signeras med HS256
                 .compact();
     }
 
     public Map<String, String> verifyToken(String token) {
         Claims claims = Jwts.parser()
-                .verifyWith(getKey())
+                .verifyWith(getKey()) //samma hemliga nyckel
                 .build()
-                .parseSignedClaims(token)
+                .parseSignedClaims(token)   //kastar undantag om signatur är fel
                 .getPayload();
         return Map.of(
                 "userId",   claims.getSubject(),

@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+//  AuthController tar emot HTTP-anrop och delegerar logiken vidare.
+//  Själva arbetet — BCrypt, JWT, databas — sker i AuthService och JwtService.
+// Controllern är bara ingångspunkten.
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {

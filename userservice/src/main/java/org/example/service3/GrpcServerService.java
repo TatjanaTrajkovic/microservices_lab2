@@ -16,6 +16,7 @@ public class GrpcServerService extends UserServiceGrpc.UserServiceImplBase {
         this.userRepository = userRepository;
     }
 
+    // här frågar den user db om in info och skicar tillbaka till message-service som ställde frågan innan
     @Override
     public void getUserProfile(GetUserProfileRequest request,
                                StreamObserver<UserProfileResponse> responseObserver) {
