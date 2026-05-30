@@ -33,7 +33,8 @@ public class MessageService {
         Message msg = new Message();
         msg.setContent(req.content());
         msg.setSenderId(req.senderId());
-
+//hela den här betyder:Om UserService är nere eller svarar fel kraschar inte MessageService — meddelandet sparas ändå i databasen,
+//   bara utan senderUsername. Det är en form av transient felhantering.
         // Fetch sender's username via gRPC call to userservice
         if (req.senderId() != null && !req.senderId().isBlank()) {
             try {
