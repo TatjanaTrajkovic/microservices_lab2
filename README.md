@@ -67,7 +67,7 @@ Kontrollera att allt är igång:
 docker compose ps
 ```
 
-Alla fem containers (mysql, rabbitmq, authservice, userservice, messageservice, bff) ska ha status `Up`.
+Alla sex containers (mysql, rabbitmq, authservice, userservice, messageservice, bff) ska ha status `Up`.
 
 ---
 
@@ -87,10 +87,9 @@ curl -s -X POST http://localhost:8080/api/users \
 Förväntat svar:
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "userId": "550e8400-e29b-41d4-a716-446655440000",
   "username": "alice",
-  "email": "alice@example.com",
-  "createdAt": "2026-05-27T20:00:00"
+  "email": "alice@example.com"
 }
 ```
 
@@ -110,7 +109,8 @@ curl -s -X POST http://localhost:8080/api/auth/login \
 Förväntat svar:
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiJ9..."
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "userId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
