@@ -1,4 +1,4 @@
-# Laboration 2 — Distribuerad Chatt-Applikation (Godkänt)
+# Laboration 2 — Distribuerad Chatt-Applikation
 
 En mikrotjänstarkitektur med JWT-autentisering, gRPC-kommunikation och RabbitMQ-meddelandehantering.
 
