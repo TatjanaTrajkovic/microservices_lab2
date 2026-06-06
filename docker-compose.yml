@@ -81,5 +81,16 @@ services:
       SERVICES_USER_URL: http://userservice:8083
       SERVICES_MESSAGE_URL: http://messageservice:8082
 
+  botservice:
+    build: ./botservice
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      messageservice:
+        condition: service_started
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SERVICES_MESSAGE_URL: http://messageservice:8082
+
 volumes:
   mysql_data:

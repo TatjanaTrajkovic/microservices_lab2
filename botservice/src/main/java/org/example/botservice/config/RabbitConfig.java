@@ -1,4 +1,4 @@
-package org.example.service2.config;
+package org.example.botservice.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitConfig {
 
     public static final String EXCHANGE_NAME = "chat.exchange";
-    public static final String QUEUE_NAME    = "message.published";
+    public static final String BOT_QUEUE     = "bot.queue";
     public static final String ROUTING_KEY   = "message-published";
 
     @Bean
@@ -21,13 +21,13 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Queue messagePublishedQueue() {
-        return new Queue(QUEUE_NAME, true);
+    public Queue botQueue() {
+        return new Queue(BOT_QUEUE, true);
     }
 
     @Bean
-    public Binding binding(Queue messagePublishedQueue, TopicExchange chatExchange) {
-        return BindingBuilder.bind(messagePublishedQueue).to(chatExchange).with(ROUTING_KEY);
+    public Binding botBinding(Queue botQueue, TopicExchange chatExchange) {
+        return BindingBuilder.bind(botQueue).to(chatExchange).with(ROUTING_KEY);
     }
 
     @Bean
