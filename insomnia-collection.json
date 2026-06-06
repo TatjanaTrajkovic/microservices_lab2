@@ -251,6 +251,94 @@
     },
 
     {
+      "_id": "grp_bot",
+      "_type": "request_group",
+      "parentId": "wrk_001",
+      "name": "BotService — via BFF (event-driven)"
+    },
+    {
+      "_id": "req_bot_hej",
+      "_type": "request",
+      "parentId": "grp_bot",
+      "name": "!bot hej",
+      "method": "POST",
+      "url": "{{ _.bff_url }}/api/messages",
+      "description": "Skickar !bot hej via BFF → MessageService publicerar event → BotService konsumerar från bot.queue → svarar via REST till MessageService. Kräver JWT.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"!bot hej\"\n}"
+      }
+    },
+    {
+      "_id": "req_bot_hjalp",
+      "_type": "request",
+      "parentId": "grp_bot",
+      "name": "!bot hjälp",
+      "method": "POST",
+      "url": "{{ _.bff_url }}/api/messages",
+      "description": "Boten svarar med lista på tillgängliga kommandon. Kräver JWT.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"!bot hjälp\"\n}"
+      }
+    },
+    {
+      "_id": "req_bot_tid",
+      "_type": "request",
+      "parentId": "grp_bot",
+      "name": "!bot tid",
+      "method": "POST",
+      "url": "{{ _.bff_url }}/api/messages",
+      "description": "Boten svarar med aktuell tid. Kräver JWT.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"!bot tid\"\n}"
+      }
+    },
+    {
+      "_id": "req_bot_skamt",
+      "_type": "request",
+      "parentId": "grp_bot",
+      "name": "!bot skämt",
+      "method": "POST",
+      "url": "{{ _.bff_url }}/api/messages",
+      "description": "Boten svarar med ett slumpmässigt skämt. Kräver JWT.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"!bot skämt\"\n}"
+      }
+    },
+    {
+      "_id": "req_bot_se_svar",
+      "_type": "request",
+      "parentId": "grp_bot",
+      "name": "Se bot-svar (hämta meddelanden)",
+      "method": "GET",
+      "url": "{{ _.bff_url }}/api/messages",
+      "description": "Hämta alla meddelanden och se bot-svaret med senderUsername: bot. Kör denna 1-2 sekunder efter att du skickat ett !bot-kommando.",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "body": { "mimeType": "application/json" }
+    },
+
+    {
       "_id": "req_msg_send",
       "_type": "request",
       "parentId": "grp_msg",
