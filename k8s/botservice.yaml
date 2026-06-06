@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: botservice
+spec:
+  selector:
+    matchLabels:
+      app: botservice
+  template:
+    metadata:
+      labels:
+        app: botservice
+    spec:
+      containers:
+        - name: botservice
+          image: microservices_lab2-botservice:latest
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_RABBITMQ_HOST
+              value: rabbitmq
+            - name: SERVICES_MESSAGE_URL
+              value: http://messageservice:8082
