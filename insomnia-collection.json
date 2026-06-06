@@ -1,7 +1,7 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2026-05-28",
+  "__export_date": "2026-06-06",
   "__export_source": "microservices-lab2",
   "resources": [
     {
@@ -20,6 +20,19 @@
         "auth_url": "http://localhost:9000",
         "user_url": "http://localhost:8083",
         "message_url": "http://localhost:8082",
+        "token": ""
+      }
+    },
+    {
+      "_id": "env_k8s",
+      "_type": "environment",
+      "parentId": "wrk_001",
+      "name": "Kubernetes / Minikube",
+      "data": {
+        "bff_url": "http://127.0.0.1:65421",
+        "auth_url": "http://127.0.0.1:65421",
+        "user_url": "http://127.0.0.1:65421",
+        "message_url": "http://127.0.0.1:65421",
         "token": ""
       }
     },

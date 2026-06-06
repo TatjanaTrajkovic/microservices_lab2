@@ -1,6 +1,6 @@
-# Laboration 2 — Distribuerad Chatt-Applikation
+# Laboration 2 — Distribuerad Chatt-Applikation (VG)
 
-En mikrotjänstarkitektur med JWT-autentisering, gRPC-kommunikation och RabbitMQ-meddelandehantering.
+En mikrotjänstarkitektur med JWT-autentisering, gRPC-kommunikation, RabbitMQ event-bus och en event-driven BotService. Systemet körs antingen via Docker Compose (lokal utveckling) eller i ett Kubernetes-kluster med Minikube (VG-krav).
 
 ---
 
@@ -14,273 +14,253 @@ En mikrotjänstarkitektur med JWT-autentisering, gRPC-kommunikation och RabbitMQ
   ┌─────────────┐
   │     BFF     │  ← JWT-validering, proxy-lager
   └──────┬──────┘
-         │ REST (HTTP)          REST (HTTP)
+         │ REST               REST
          ├──────────────────────────────────────────┐
          v                                          v
   ┌─────────────┐                        ┌──────────────────┐
   │ AuthService │  (port 9000)           │  MessageService  │ (port 8082)
-  │  JWT-utfärd │                        │  RabbitMQ-publik.│
+  │  JWT-utfärd │                        │  publicerar event│
   └─────────────┘                        └────────┬─────────┘
-         |                                        │ gRPC (port 8083)
-         v                                        v
-  ┌─────────────┐                        ┌──────────────────┐
-  │ UserService │ ◄──────────────────────┤  (GetUserProfile)│
-  │ gRPC-server │  (port 8083)           └──────────────────┘
+                                                  │ gRPC
+                                                  v
+                                         ┌──────────────────┐
+                                         │   UserService    │ (port 8083)
+                                         │   gRPC-server    │
+                                         └────────┬─────────┘
+                                                  │ JPA
+                                                  v
+                                         ┌──────────────────┐
+                                         │     MySQL        │
+                                         │  user_db         │
+                                         │  message_db      │
+                                         └──────────────────┘
+
+  MessageService
+        │ publish (message-published)
+        v
+  ┌─────────────┐
+  │  RabbitMQ   │  chat.exchange
   └──────┬──────┘
-         │ JPA
+         │ consume (bot.queue)
          v
-  ┌─────────────┐     ┌────────────┐
-  │    MySQL    │     │  RabbitMQ  │
-  │  user_db   │     │ (port 5672)│
-  │ message_db │     └────────────┘
+  ┌─────────────┐
+  │ BotService  │  ← analyserar meddelanden, svarar via REST
   └─────────────┘
 ```
 
 ### Tjänster
 
-| Tjänst          | Port | Ansvar                                                    |
-|-----------------|------|-----------------------------------------------------------|
-| **authservice** | 9000 | Registrering, inloggning, JWT-utfärdning och verifiering |
-| **userservice** | 8083 | Användarprofiler (REST + gRPC-server)                     |
-| **messageservice** | 8082 | Meddelanden, publicerar händelser till RabbitMQ        |
-| **bff**         | 8080 | API-gateway, JWT-skydd, proxying till övriga tjänster    |
+| Tjänst             | Port  | Ansvar                                                              |
+|--------------------|-------|---------------------------------------------------------------------|
+| **bff**            | 8080  | API-gateway, JWT-skydd, proxying till övriga tjänster               |
+| **authservice**    | 9000  | Registrering, inloggning, JWT-utfärdning och verifiering            |
+| **userservice**    | 8083  | Användarprofiler (REST + gRPC-server)                               |
+| **messageservice** | 8082  | Meddelanden, publicerar händelser till RabbitMQ                     |
+| **botservice**     | —     | Konsumerar events från RabbitMQ, svarar automatiskt via MessageService |
 
 ---
 
 ## Förutsättningar
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installerat och igång
-- Port 8080, 8082, 8083, 9000, 3306, 5672, 15672 lediga
+- För Kubernetes: [Minikube](https://minikube.sigs.k8s.io/) installerat
 
 ---
 
-## Starta applikationen
+## Starta med Docker Compose (lokal utveckling)
 
 ```bash
 docker compose up --build
 ```
 
-> **Första gången** tar det ~2–3 minuter. MySQL och RabbitMQ startar med health checks — de övriga tjänsterna startar automatiskt när infrastrukturen är redo.
+> Första gången tar det ~2–3 minuter. MySQL och RabbitMQ startar med health checks.
 
 Kontrollera att allt är igång:
 ```bash
 docker compose ps
 ```
 
-Alla sex containers (mysql, rabbitmq, authservice, userservice, messageservice, bff) ska ha status `Up`.
+Alla sju containers ska ha status `Up`: mysql, rabbitmq, authservice, userservice, messageservice, botservice, bff.
+
+Stoppa:
+```bash
+docker compose down        # stoppa
+docker compose down -v     # stoppa + radera databasdata
+```
 
 ---
 
-## Steg-för-steg demonstration (G-krav)
+## Starta med Kubernetes / Minikube (VG)
+
+### 1. Starta Minikube
+```bash
+minikube start --driver=docker
+```
+
+### 2. Peka terminalen mot Minikubes Docker-daemon
+```bash
+eval $(minikube docker-env)
+```
+
+### 3. Bygg alla images inuti Minikube
+```bash
+docker compose build
+```
+
+### 4. Applicera alla Kubernetes-manifest
+```bash
+kubectl apply -f k8s/
+```
+
+### 5. Kontrollera att alla pods startar
+```bash
+kubectl get pods -w
+```
+
+> `userservice` och `messageservice` kan krascha ett par gånger tills MySQL är redo — det är normalt. Kubernetes startar om dem automatiskt.
+
+### 6. Hämta BFF-URL
+```bash
+minikube service bff --url
+```
+
+Lämna den terminalen öppen. Använd URL:en (t.ex. `http://127.0.0.1:65421`) i alla anrop nedan.
+
+### Stoppa Kubernetes
+```bash
+kubectl delete -f k8s/
+minikube stop
+```
+
+---
+
+## Steg-för-steg demonstration
+
+> Byt ut `http://localhost:8080` mot Minikube-URL:en om du kör i Kubernetes.
 
 ### 1. Registrera en användare
-
-Registreringen skapar **både** en användarprofil i UserService och autentiseringsuppgifter i AuthService.
 
 ```bash
 curl -s -X POST http://localhost:8080/api/users \
   -H "Content-Type: application/json" \
-  -d '{"username": "alice", "email": "alice@example.com", "password": "secret123"}' \
-  | jq .
+  -d '{"username": "alice", "email": "alice@example.com", "password": "secret123"}'
 ```
 
-Förväntat svar:
-```json
-{
-  "userId": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "alice",
-  "email": "alice@example.com"
-}
-```
+### 2. Logga in och spara JWT-token
 
-> BFF anropar först UserService (skapar profil) och sedan AuthService (registrerar lösenord). Allt i ett enda API-anrop.
-
----
-
-### 2. Logga in och hämta JWT-token
-
-```bash
-curl -s -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "alice", "password": "secret123"}' \
-  | jq .
-```
-
-Förväntat svar:
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "userId": "550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-Spara token i en variabel för kommande anrop:
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "alice", "password": "secret123"}' \
-  | jq -r '.token')
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
 
 echo "Token: $TOKEN"
 ```
 
-> JWT-token är signerad med HS256 och är giltig i 24 timmar. Den innehåller `userId` och `username` som claims.
-
----
-
-### 3. Verifiera JWT-token (AuthService)
-
-```bash
-curl -s http://localhost:9000/api/auth/verify \
-  -H "Authorization: Bearer $TOKEN" \
-  | jq .
-```
-
-Förväntat svar:
-```json
-{
-  "userId": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "alice"
-}
-```
-
-> Denna endpoint visar att AuthService kan validera tokens oberoende av BFF — användbart för service-to-service-autentisering.
-
----
-
-### 4. Hämta användarprofil (kräver JWT)
-
-```bash
-curl -s http://localhost:8080/api/users \
-  -H "Authorization: Bearer $TOKEN" \
-  | jq .
-```
-
-> BFF validerar JWT-token i JwtAuthFilter innan requesten proxyas till UserService. Utan giltig token returneras HTTP 401.
-
----
-
-### 5. Skicka ett meddelande — gRPC + RabbitMQ
+### 3. Skicka ett meddelande
 
 ```bash
 curl -s -X POST http://localhost:8080/api/messages \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"content": "Hej från mikrotjänstvärlden!"}' \
-  | jq .
+  -d '{"content": "Hej från mikrotjänstvärlden!"}'
 ```
 
-Förväntat svar:
-```json
-{
-  "id": "a1b2c3d4-...",
-  "content": "Hej från mikrotjänstvärlden!",
-  "senderId": "550e8400-...",
-  "senderUsername": "alice",
-  "timestamp": "2026-05-27T20:05:00"
-}
-```
-
-**Vad som händer bakom kulisserna:**
-
-1. BFF extraherar `userId` från JWT-token och skickar med requesten till MessageService
-2. **MessageService anropar UserService via gRPC** (`GetUserProfile`) för att hämta `senderUsername`
+**Vad som händer:**
+1. BFF extraherar `userId` från JWT och skickar till MessageService
+2. MessageService anropar UserService via **gRPC** för att hämta `senderUsername`
 3. Meddelandet sparas i MySQL (`message_db`)
-4. En `message-published`-händelse publiceras till RabbitMQ (exchange: `chat.exchange`, routing key: `message-published`)
+4. Ett `message-published`-event publiceras till **RabbitMQ**
+5. BotService konsumerar eventet från `bot.queue`
 
----
+### 4. Testa BotService
 
-### 6. Hämta alla meddelanden
+Skicka ett bot-kommando:
+```bash
+curl -s -X POST http://localhost:8080/api/messages \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"content": "!bot hej"}'
+```
+
+Vänta 1–2 sekunder, hämta sedan meddelanden:
+```bash
+curl -s http://localhost:8080/api/messages \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Bot-svaret visas med `senderUsername: "bot"`.
+
+**Tillgängliga bot-kommandon:**
+
+| Kommando      | Bot svarar                                        |
+|---------------|---------------------------------------------------|
+| `!bot hej`    | Hälsning + info om kommandon                      |
+| `!bot hjälp`  | Lista på alla kommandon                           |
+| `!bot tid`    | Aktuell tid                                       |
+| `!bot skämt`  | Ett slumpmässigt skämt                            |
+
+### 5. Hämta alla meddelanden
 
 ```bash
 curl -s http://localhost:8080/api/messages \
-  -H "Authorization: Bearer $TOKEN" \
-  | jq .
+  -H "Authorization: Bearer $TOKEN"
 ```
-
----
-
-### 7. Verifiera gRPC-anropet i loggarna
-
-```bash
-# Se att MessageService gör gRPC-anropet till UserService
-docker compose logs messageservice | grep -i grpc
-
-# Se att UserService tar emot gRPC-anropet
-docker compose logs userservice | grep -i grpc
-```
-
----
-
-### 8. Verifiera RabbitMQ-händelser
-
-Öppna RabbitMQ Management Console: [http://localhost:15672](http://localhost:15672)
-
-- **Användarnamn:** `guest`
-- **Lösenord:** `guest`
-
-Klicka på fliken **Queues** och hitta `message.published`. Under **Get messages** kan du inspektera publicerade händelser med fälten `messageId`, `content`, `senderId` och `senderUsername`.
 
 ---
 
 ## Arkitekturförklaring
 
 ### JWT-autentisering
-
 - **AuthService** utfärdar tokens signerade med HS256 (JJWT 0.12.6)
-- **BFF** validerar tokens i `JwtAuthFilter` (OncePerRequestFilter) och sätter `userId` i SecurityContext
+- **BFF** validerar tokens i `JwtAuthFilter` och sätter `userId` i SecurityContext
 - Lösenord hashas med BCrypt
 - Token innehåller: `sub` (userId), `username`, `iat`, `exp`
 
 ### gRPC-kommunikation
+- **UserService** exponerar en gRPC-server
+- Proto: `GetUserProfileRequest { userId }` → `UserProfileResponse { userId, username, email, found }`
+- **MessageService** är gRPC-klient och hämtar `senderUsername` vid varje nytt meddelande
 
-- **UserService** exponerar en gRPC-server via `spring-grpc-server-web-spring-boot-starter`
-- Proto-definition: `GetUserProfileRequest { userId }` → `UserProfileResponse { userId, username, email, found }`
-- **MessageService** är gRPC-klient och anropar `GetUserProfile` när ett meddelande skickas
-
-### RabbitMQ-meddelandehantering
-
+### RabbitMQ — Event Bus
 - Exchange: `chat.exchange` (Topic Exchange)
 - Routing key: `message-published`
-- Queue: `message.published`
-- Händelsen publiceras efter att meddelandet sparats i databasen
+- `message.published` — befintlig kö
+- `bot.queue` — BotService egna kö, bunden till samma exchange
 
-### Databaser
+### BotService — Event-driven
+- Lyssnar på `bot.queue` via `@RabbitListener`
+- Ignorerar meddelanden med `senderId: "bot"` för att undvika oändlig loop
+- Svarar via `POST /api/messages` till MessageService
+- Har ingen egen databas eller REST-API
 
-- `user_db` — användarprofiler (UserService)
-- `message_db` — meddelanden (MessageService)
-- Autentiseringsuppgifter lagras in-memory i H2 (AuthService, ingen persistent data behövs)
-
----
-
-## Stopp och rensning
-
-```bash
-# Stoppa alla containers
-docker compose down
-
-# Stoppa och radera databasens data (börja om från scratch)
-docker compose down -v
-```
+### Kubernetes
+- Alla tjänster kommunicerar via Kubernetes **Service DNS-namn** (t.ex. `http://messageservice:8082`)
+- BFF exponeras som **NodePort** (port 30080) — enda externa ingångspunkten
+- Övriga tjänster är **ClusterIP** — enbart åtkomliga inuti klustret
+- MySQL använder **PersistentVolumeClaim** för datalagring
 
 ---
 
 ## Felsökning
 
-**Tjänst startar inte?**
+### Docker Compose
 ```bash
 docker compose logs <tjänstnamn>
-# Exempel:
-docker compose logs userservice
-```
-
-**MySQL hinner inte starta?**
-UserService och MessageService har `depends_on: mysql: condition: service_healthy`. Om MySQL ändå inte är redo, vänta 30 sekunder och kör:
-```bash
 docker compose restart userservice messageservice
 ```
 
-**Port redan används?**
+### Kubernetes
+```bash
+kubectl logs <pod-namn>
+kubectl describe pod <pod-namn>
+kubectl get pods
+```
+
+**Pods i CrashLoopBackOff?**
+Troligen väntar tjänsten på MySQL eller RabbitMQ. Vänta 30 sekunder — Kubernetes startar om automatiskt tills allt är redo.
+
+**Port redan används (Docker Compose)?**
 ```bash
 lsof -ti:8080 | xargs kill -9
 ```
