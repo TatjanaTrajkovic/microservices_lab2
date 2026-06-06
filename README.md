@@ -92,19 +92,25 @@ docker compose down -v     # stoppa + radera databasdata
 
 ## Starta med Kubernetes / Minikube (VG)
 
-### 1. Starta Minikube
+### 1. Starta Minikube med tillräckliga resurser
 ```bash
-minikube start --driver=docker
+minikube start --driver=docker --memory=6144 --cpus=4
 ```
 
-### 2. Peka terminalen mot Minikubes Docker-daemon
-```bash
-eval $(minikube docker-env)
-```
-
-### 3. Bygg alla images inuti Minikube
+### 2. Bygg images lokalt
 ```bash
 docker compose build
+```
+
+> Kör INTE `eval $(minikube docker-env)` före bygget — det belastar Minikubes resurser och kan krascha apiservern.
+
+### 3. Ladda images in i Minikube
+```bash
+minikube image load microservices_lab2-authservice:latest
+minikube image load microservices_lab2-bff:latest
+minikube image load microservices_lab2-botservice:latest
+minikube image load microservices_lab2-messageservice:latest
+minikube image load microservices_lab2-userservice:latest
 ```
 
 ### 4. Applicera alla Kubernetes-manifest
@@ -117,14 +123,14 @@ kubectl apply -f k8s/
 kubectl get pods -w
 ```
 
-> `userservice` och `messageservice` kan krascha ett par gånger tills MySQL är redo — det är normalt. Kubernetes startar om dem automatiskt.
+> `userservice` och `messageservice` kan krascha ett par gånger tills MySQL är redo — det är normalt. Kubernetes startar om dem automatiskt. Vänta tills alla visar `Running`.
 
-### 6. Hämta BFF-URL
+### 6. Hämta BFF-URL (öppna en ny terminal)
 ```bash
 minikube service bff --url
 ```
 
-Lämna den terminalen öppen. Använd URL:en (t.ex. `http://127.0.0.1:65421`) i alla anrop nedan.
+Lämna den terminalen öppen — stänger du den försvinner tunneln. Notera URL:en, t.ex. `http://127.0.0.1:50847`. Porten är slumpmässig varje gång.
 
 ### Stoppa Kubernetes
 ```bash
