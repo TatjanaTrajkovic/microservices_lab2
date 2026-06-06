@@ -1,5 +1,7 @@
 package org.example.botservice.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -12,6 +14,8 @@ import java.util.Random;
 
 @Service
 public class BotService {
+
+    private static final Logger log = LoggerFactory.getLogger(BotService.class);
 
     private final RestClient restClient;
     private final Random random = new Random();
@@ -32,12 +36,21 @@ public class BotService {
         String senderId = (String) event.get("senderId");
         String content  = (String) event.get("content");
 
-        if ("bot".equals(senderId)) return;
-        if (content == null || !content.startsWith("!bot")) return;
+        log.info("Event mottaget — senderId: {}, content: {}", senderId, content);
+
+        if ("bot".equals(senderId)) {
+            log.info("Ignorerar eget meddelande från bot");
+            return;
+        }
+        if (content == null || !content.startsWith("!bot")) {
+            log.info("Inget !bot-kommando, ignorerar");
+            return;
+        }
 
         String command = content.substring(4).trim().toLowerCase();
         String reply   = generateReply(command);
 
+        log.info("Svarar på kommando '{}' med: {}", command, reply);
         postReply(reply);
     }
 
