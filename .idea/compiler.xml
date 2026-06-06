@@ -6,10 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="bff" />
-        <module name="authservice" />
         <module name="service2" />
+        <module name="bff" />
         <module name="service3" />
+        <module name="botservice" />
+        <module name="authservice" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -24,6 +25,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="authservice" options="-parameters" />
       <module name="bff" options="-parameters" />
+      <module name="botservice" options="-parameters" />
       <module name="demo" options="-parameters" />
       <module name="orderservice" options="-parameters" />
       <module name="orderservice (1)" options="-parameters" />

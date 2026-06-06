@@ -14,5 +14,6 @@
         <module>bff</module>
         <module>userservice</module>
         <module>messageservice</module>
+        <module>botservice</module>
     </modules>
 </project>
