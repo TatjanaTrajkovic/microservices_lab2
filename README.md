@@ -244,7 +244,9 @@ curl -s http://localhost:8080/api/messages \
 - Alla tjänster kommunicerar via Kubernetes **Service DNS-namn** (t.ex. `http://messageservice:8082`)
 - BFF exponeras som **NodePort** (port 30080) — enda externa ingångspunkten
 - Övriga tjänster är **ClusterIP** — enbart åtkomliga inuti klustret
-- MySQL använder **PersistentVolumeClaim** för datalagring
+- MySQL och RabbitMQ körs som **StatefulSet** istället för Deployment eftersom de behöver stabil pod-identitet och persistent storage
+- Varje StatefulSet använder en **Headless Service** (`clusterIP: None`) vilket ger varje pod ett stabilt DNS-namn (t.ex. `mysql-0.mysql`, `rabbitmq-0.rabbitmq`)
+- Persistent storage hanteras via **`volumeClaimTemplates`** i StatefulSet-deklarationen — Kubernetes skapar automatiskt en PVC per pod med stabila namn (`data-mysql-0`, `data-rabbitmq-0`). Om en pod kraschar och startas om får den tillbaka exakt samma disk med samma data
 
 ---
 
